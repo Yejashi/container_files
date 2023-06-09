@@ -1,0 +1,130 @@
+Bootstrap:docker
+From:spack/centos7@sha256:bbcc6069ba699143722d8578df01daf3c1d84da2902a302c7575c88a4d2f1097
+ 
+%environment
+    # >>> conda initialize >>>
+    # !! Contents within this block are managed by 'conda init' !!
+    __conda_setup="$('/miniconda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+      eval "$__conda_setup"
+    else
+      if [ -f "/miniconda/etc/profile.d/conda.sh" ]; then
+            . "/miniconda/etc/profile.d/conda.sh"
+      else
+            export PATH="/miniconda/bin:$PATH"
+      fi
+    fi
+    unset __conda_setup
+    # <<< conda initialize <<<
+ 
+	SPACK_ROOT=/spack
+	export SPACK_ROOT
+	export PATH=$SPACK_ROOT/bin:$PATH
+ 	
+	#Load neccessary dependencies
+####eval `spack load --sh    gcc@9.2.0`
+####spack compiler find > /dev/null
+####eval `spack load --sh   libunwind`
+####eval `spack load --sh   libtool %gcc@9.2.0`
+####eval `spack load --sh   openmpi@4.1.2`
+####eval `spack load --sh   boost`
+####eval `spack load --sh   nlohmann-json@3.7.0`
+####eval `spack load --sh   spdlog`
+####eval `spack load --sh   igraph@0.7.1`
+####eval `spack load --sh   eigen@3.3.7`
+
+    lib_path=$(echo /spack/opt/spack/linux-*/gcc*/openmpi-4.1.2*/lib/)
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$lib_path
+    export LD_LIBRARY_PATH
+
+ 
+%post
+	yum update -y 
+    #yum -y install -y git curl vim sed wget gcc g++ build-essential gfortran bc
+    #yum -y install -y wget g++ gfortran
+    yum -y install -y git curl vim sed wget gcc g++ build-essential gfortran bc
+ 
+    #Install Anaconda
+	#wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    wget https://repo.anaconda.com/archive/Anaconda3-2022.05-Linux-ppc64le.sh
+    mv Anaconda3-2022.05-Linux-ppc64le.sh miniconda.sh
+
+	bash miniconda.sh -b -p miniconda
+	eval "$(miniconda/bin/conda shell.bash hook)"
+	conda init
+
+    conda update conda -y
+    conda update -n base -c defaults conda
+	conda install -y python
+    conda update python -y
+ 
+	git config --global url."https://".insteadOf git://
+ 
+	export SPACK_ROOT=/spack
+	export SPACK_ROOT
+	export PATH=$SPACK_ROOT/bin:$PATH
+
+    rm -rf /opt/spack
+    git clone -c feature.manyFiles=true https://github.com/spack/spack.git $SPACK_ROOT
+	. $SPACK_ROOT/share/spack/setup-env.sh
+ 
+    #spack compiler find --scope system $(which gcc)
+    #spack compiler find --scope system $(which g++)
+    #spack compiler find --scope system $(which gfortran)
+
+    spack compiler remove gcc@4.8.5
+    
+    #Install spack packages
+	spack install gcc@9.2.0
+    spack load gcc@9.2.0
+	spack compiler find
+    spack install libtool %gcc@9.2.0
+    spack install zlib %gcc@9.2.0
+	spack install libunwind %gcc@9.2.0
+	spack install openmpi@4.1.2  %gcc@9.2.0
+	spack install eigen@3.3.7 %gcc@9.2.0 ^cmake@3.16.2 nlohmann-json@3.7.0 %gcc@9.2.0 ^cmake@3.16.2 igraph@0.7.1 %gcc@9.2.0 spdlog %gcc@9.2.0 ^cmake@3.16.2
+	spack install boost@1.70.0+atomic+chrono~clanglibcpp~context~coroutine cxxstd=98 +date_time~debug+exception~fiber+filesystem+graph~icu+iostreams+locale+log+math+mpi+multithreaded~numpy+pic+program_options~python+random+regex+serialization+shared+signals~singlethreaded+system~taggedlayout+test+thread+timer~versionedlayout visibility=hidden +wave ^openmpi
+    spack install cmake@3.22.6 %gcc@9.2.0
+
+    #Load the installed spack packages
+    spack load gcc@9.2.0
+    spack load cmake@3.22.6 %gcc@9.2.0
+    spack load libtool %gcc@9.2.0
+    spack load openmpi@4.1.2 %gcc@9.2.0
+    spack load libunwind %gcc@9.2.0
+    spack load boost@1.70.0 %gcc@9.2.0
+    spack load nlohmann-json %gcc@9.2.0
+    spack load spdlog %gcc@9.2.0
+    spack load igraph %gcc@9.2.0
+    spack load eigen@3.3.7 %gcc@9.2.0
+
+    #Install necessary Anaconda packages
+    export PATH=/miniconda/bin/conda:$PATH
+    conda config --append channels conda-forge
+    conda install -y ruptures pyelftools pkg-config pkgconfig eigen=3.3.7
+
+    #Install pip packages
+    pip install grakel==0.1.8
+    pip install python-igraph==0.9.11
+    pip install ipyfilechooser==0.6.0
+    pip install mpi4py==3.1.3
+
+    eigpath=$(pkg-config --variable=pcfiledir eigen3)
+    eigpath="${eigpath}/eigen3.pc"
+    sed -i 's/include\/eigen3/include/' ${eigpath}
+    pip install graphkernels==0.2.1
+    sed -i 's/include/include\/eigen3/' ${eigpath}
+    spack unload eigen@3.3.7
+    spack load eigen@3.3.7
+
+    spack unload cmake@3.22.6
+    spack load cmake@3.16.2
+
+    #Compile ANACIN-X
+    git clone https://github.com/TauferLab/ANACIN-X.git
+    cd ANACIN-X
+    #git checkout c4670e1e103212850f9e8250637ba675fd5760be
+    git checkout visualization_fix
+    ./setup.sh -c
+
+    sed -i 's/locks: true/locks: false/g' $SPACK_ROOT/etc/spack/defaults/config.yaml
