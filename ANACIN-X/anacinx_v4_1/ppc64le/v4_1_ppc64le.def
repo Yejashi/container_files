@@ -22,16 +22,16 @@ From:spack/centos7@sha256:bbcc6069ba699143722d8578df01daf3c1d84da2902a302c7575c8
 	export PATH=$SPACK_ROOT/bin:$PATH
  	
 	#Load neccessary dependencies
-	eval `spack load --sh    gcc@9.2.0`
-	spack compiler find > /dev/null
-	eval `spack load --sh   libunwind`
-	eval `spack load --sh   libtool %gcc@9.2.0`
-    eval `spack load --sh   openmpi@4.1.2`
-	eval `spack load --sh   boost`
-	eval `spack load --sh   nlohmann-json@3.7.0`
-	eval `spack load --sh   spdlog`
-	eval `spack load --sh   igraph@0.7.1`
-	eval `spack load --sh   eigen@3.3.7`
+####eval `spack load --sh    gcc@9.2.0`
+####spack compiler find > /dev/null
+####eval `spack load --sh   libunwind`
+####eval `spack load --sh   libtool %gcc@9.2.0`
+####eval `spack load --sh   openmpi@4.1.2`
+####eval `spack load --sh   boost`
+####eval `spack load --sh   nlohmann-json@3.7.0`
+####eval `spack load --sh   spdlog`
+####eval `spack load --sh   igraph@0.7.1`
+####eval `spack load --sh   eigen@3.3.7`
 
     lib_path=$(echo /spack/opt/spack/linux-*/gcc*/openmpi-4.1.2*/lib/)
     LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$lib_path
@@ -40,7 +40,9 @@ From:spack/centos7@sha256:bbcc6069ba699143722d8578df01daf3c1d84da2902a302c7575c8
  
 %post
 	yum update -y 
-    yum -y install -y git curl sed vim wget gcc g++ build-essential gfortran bc
+    #yum -y install -y git curl vim sed wget gcc g++ build-essential gfortran bc
+    #yum -y install -y wget g++ gfortran
+    yum -y install -y git curl vim sed wget gcc g++ build-essential gfortran bc
  
     #Install Anaconda
 	#wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
@@ -52,7 +54,7 @@ From:spack/centos7@sha256:bbcc6069ba699143722d8578df01daf3c1d84da2902a302c7575c8
 	conda init
 
     conda update conda -y
-    conda update -n base conda -y
+    conda update -n base -c defaults conda
 	conda install -y python
     conda update python -y
  
@@ -119,9 +121,10 @@ From:spack/centos7@sha256:bbcc6069ba699143722d8578df01daf3c1d84da2902a302c7575c8
     spack load cmake@3.16.2
 
     #Compile ANACIN-X
-    #git clone https://github.com/TauferLab/ANACIN-X.git
-    git clone https://github.com/Yejashi/ANACIN-X
+    git clone https://github.com/TauferLab/ANACIN-X.git
     cd ANACIN-X
+    #git checkout c4670e1e103212850f9e8250637ba675fd5760be
+    git checkout visualization_fix
     ./setup.sh -c
 
     sed -i 's/locks: true/locks: false/g' $SPACK_ROOT/etc/spack/defaults/config.yaml
