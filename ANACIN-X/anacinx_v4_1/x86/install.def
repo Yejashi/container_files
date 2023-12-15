@@ -24,6 +24,10 @@ From:setup.sif
     spack load igraph %gcc@9.2.0
     spack load eigen@3.3.7 %gcc@9.2.0
     spack load cmake@3.16.2
+	
+    pip install psutil
+    pip install matplotlib
+    pip install ipykernel
 
     #Compile ANACIN-X
     git clone https://github.com/TauferLab/ANACIN-X.git
